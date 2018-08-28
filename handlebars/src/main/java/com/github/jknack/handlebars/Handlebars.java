@@ -21,7 +21,6 @@ import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notEmpty;
 import static org.apache.commons.lang3.Validate.notNull;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +30,8 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-
 import com.github.jknack.handlebars.cache.NullTemplateCache;
 import com.github.jknack.handlebars.cache.TemplateCache;
 import com.github.jknack.handlebars.helper.BlockHelper;
@@ -102,78 +99,77 @@ import com.github.jknack.handlebars.io.TemplateSource;
  */
 public class Handlebars implements HelperRegistry {
 
-  /**
+    /**
    * A {@link SafeString} tell {@link Handlebars} that the content should not be
    * escaped as HTML.
    *
    * @author edgar.espina
    * @since 0.1.0
    */
-  public static class SafeString implements CharSequence {
+    public static class SafeString implements CharSequence {
 
-    /**
+        /**
      * The content.
      */
-    private CharSequence content;
+        private CharSequence content;
 
-    /**
+        /**
      * Creates a new {@link SafeString}.
      *
      * @param content The string content.
      */
-    public SafeString(final CharSequence content) {
-      this.content = content;
+        public SafeString(final CharSequence content) {
+            this.content = content;
+        }
+
+        @Override
+        public int length() {
+            return content.length();
+        }
+
+        @Override
+        public char charAt(final int index) {
+            return content.charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(final int start, final int end) {
+            return content.subSequence(start, end);
+        }
+
+        @Override
+        public String toString() {
+            return content.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (content == null ? 0 : content.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof SafeString) {
+                SafeString that = (SafeString) obj;
+                return content.equals(that.content);
+            }
+            return false;
+        }
     }
 
-    @Override
-    public int length() {
-      return content.length();
-    }
-
-    @Override
-    public char charAt(final int index) {
-      return content.charAt(index);
-    }
-
-    @Override
-    public CharSequence subSequence(final int start, final int end) {
-      return content.subSequence(start, end);
-    }
-
-    @Override
-    public String toString() {
-      return content.toString();
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + (content == null ? 0
-          : content.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-      if (obj instanceof SafeString) {
-        SafeString that = (SafeString) obj;
-        return content.equals(that.content);
-      }
-      return false;
-    }
-  }
-
-  /**
+    /**
    * Utilities function like: {@link Utils#escapeExpression(CharSequence)} and
    * {@link Utils#isEmpty(Object)}.
    *
    * @author edgar.espina
    * @since 0.1.0
    */
-  public static class Utils {
+    public static class Utils {
 
-    /**
+        /**
      * Evaluate the given object and return true is the object is considered
      * empty. Nulls, empty list or array and false values are considered empty.
      *
@@ -181,33 +177,33 @@ public class Handlebars implements HelperRegistry {
      * @return Return true is the object is considered empty. Nulls, empty list
      *         or array and false values are considered empty.
      */
-    @SuppressWarnings("rawtypes")
-    public static boolean isEmpty(final Object value) {
-      if (value == null) {
-        return true;
-      }
-      if (value instanceof CharSequence) {
-        return ((CharSequence) value).length() == 0;
-      }
-      if (value instanceof Collection) {
-        return ((Collection) value).size() == 0;
-      }
-      if (value instanceof Iterable) {
-        return !((Iterable) value).iterator().hasNext();
-      }
-      if (value instanceof Boolean) {
-        return !((Boolean) value).booleanValue();
-      }
-      if (value.getClass().isArray()) {
-        return Array.getLength(value) == 0;
-      }
-      if (value instanceof Number) {
-        return ((Number) value).intValue() == 0;
-      }
-      return false;
-    }
+        @SuppressWarnings("rawtypes")
+        public static boolean isEmpty(final Object value) {
+            if (value == null) {
+                return true;
+            }
+            if (value instanceof CharSequence) {
+                return ((CharSequence) value).length() == 0;
+            }
+            if (value instanceof Collection) {
+                return ((Collection) value).size() == 0;
+            }
+            if (value instanceof Iterable) {
+                return !((Iterable) value).iterator().hasNext();
+            }
+            if (value instanceof Boolean) {
+                return !((Boolean) value).booleanValue();
+            }
+            if (value.getClass().isArray()) {
+                return Array.getLength(value) == 0;
+            }
+            if (value instanceof Number) {
+                return ((Number) value).intValue() == 0;
+            }
+            return false;
+        }
 
-    /**
+        /**
      * <p>
      * Escapes the characters in a {@code String} using HTML entities.
      * </p>
@@ -227,144 +223,157 @@ public class Handlebars implements HelperRegistry {
      * @return The escaped version of the input or the same input if it's a
      *         SafeString.
      */
-    public static String escapeExpression(final CharSequence input) {
-      if (StringUtils.isEmpty(input)) {
-        return "";
-      }
-      // Don't escape SafeStrings, since they're already safe
-      if (input instanceof SafeString) {
-        return input.toString();
-      }
-      StringBuilder html = new StringBuilder(input.length());
-      for (int i = 0; i < input.length(); i++) {
-        char ch = input.charAt(i);
-        switch (ch) {
-          case '<':
-            html.append("&lt;");
-            break;
-          case '>':
-            html.append("&gt;");
-            break;
-          case '"':
-            html.append("&quot;");
-            break;
-          case '\'':
-            html.append("&#x27;");
-            break;
-          case '`':
-            html.append("&#x60;");
-            break;
-          case '&':
-            html.append("&amp;");
-            break;
-          default:
-            html.append(ch);
+        public static String escapeExpression(final CharSequence input) {
+            if (StringUtils.isEmpty(input)) {
+                return "";
+            }
+            // Don't escape SafeStrings, since they're already safe
+            if (input instanceof SafeString) {
+                return input.toString();
+            }
+            StringBuilder html = new StringBuilder(input.length());
+            for (int i = 0; i < input.length(); i++) {
+                char ch = input.charAt(i);
+                switch(ch) {
+                    case '<':
+                        html.append("&lt;");
+                        break;
+                    case '>':
+                        html.append("&gt;");
+                        break;
+                    case '"':
+                        html.append("&quot;");
+                        break;
+                    case '\'':
+                        html.append("&#x27;");
+                        break;
+                    case '`':
+                        html.append("&#x60;");
+                        break;
+                    case '&':
+                        html.append("&amp;");
+                        break;
+                    default:
+                        html.append(ch);
+                }
+            }
+            return html.toString();
         }
-      }
-      return html.toString();
     }
-  }
 
-  /**
+    /**
+   * The missing helper's name.
+   */
+    /**
    * The default start delimiter.
    */
-  public static final String DELIM_START = "{{";
+    public static final String DELIM_START = "{{";
 
-  /**
+    /**
    * The default end delimiter.
    */
-  public static final String DELIM_END = "}}";
+    public static final String DELIM_END = "}}";
 
-  /**
+    /**
    * The logging system.
    */
-  private static final Logger logger = getLogger(Handlebars.class);
+    private static final Logger logger = getLogger(Handlebars.class);
 
-  /**
+    /**
    * The template loader. Required.
    */
-  private TemplateLoader loader;
+    private TemplateLoader loader;
 
-  /**
+    /**
    * The template cache. Required.
    */
-  private TemplateCache cache = NullTemplateCache.INSTANCE;
+    private TemplateCache cache = NullTemplateCache.INSTANCE;
 
-  /**
+    /**
    * If true, missing helper parameters will be resolve to their names.
    */
-  private boolean stringParams;
+    private boolean stringParams;
 
-  /**
+    /**
    * If true, unnecessary whitespace and new lines will be removed.
    */
-  private boolean prettyPrint;
+    private boolean prettyPrint;
 
-  /**
+    /**
    * The helper registry.
    */
-  private HelperRegistry registry = new DefaultHelperRegistry();
+    private HelperRegistry registry = new DefaultHelperRegistry();
 
-  /**
+    /**
    * If true, templates will be able to call him self directly or indirectly. Use with caution.
    * Default is: false.
    */
-  private boolean infiniteLoops;
+    private boolean infiniteLoops;
 
-  /**
+    /**
    * The missing value resolver strategy.
    */
-  private MissingValueResolver missingValueResolver = MissingValueResolver.NULL;
+    private MissingValueResolver missingValueResolver = MissingValueResolver.NULL;
 
-  /**
+    /**
+   * The escaping strategy.
+   */
+    private EscapingStrategy escapingStrategy = EscapingStrategy.HTML_ENTITY;
+
+    /**
    * The parser factory. Required.
    */
-  private ParserFactory parserFactory = new HbsParserFactory();
+    private ParserFactory parserFactory = new HbsParserFactory();
 
-  /**
+    /**
    * The start delimiter.
    */
-  private String startDelimiter = DELIM_START;
+    private String startDelimiter = DELIM_START;
 
-  /**
+    /**
    * The end delimiter.
    */
-  private String endDelimiter = DELIM_END;
+    private String endDelimiter = DELIM_END;
 
-  {
-    // make sure default helpers are registered
-    registerBuiltinsHelpers(this);
-  }
+    {
+        // make sure default helpers are registered
+        registerBuiltinsHelpers(this);
+    }
 
-  /**
+    {
+        // make sure default helpers are registered
+        registerBuiltinsHelpers(this);
+    }
+
+    /**
    * Creates a new {@link Handlebars} with no cache.
    *
    * @param loader The template loader. Required.
    */
-  public Handlebars(final TemplateLoader loader) {
-    with(loader);
-  }
+    public Handlebars(final TemplateLoader loader) {
+        with(loader);
+    }
 
-  /**
+    /**
    * Creates a new {@link Handlebars} with a {@link ClassPathTemplateLoader} and no
    * cache.
    */
-  public Handlebars() {
-    this(new ClassPathTemplateLoader());
-  }
+    public Handlebars() {
+        this(new ClassPathTemplateLoader());
+    }
 
-  /**
+    /**
    * Compile the resource located at the given uri.
    *
    * @param location The resource's location. Required.
    * @return A compiled template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compile(final String location) throws IOException {
-    return compile(location, startDelimiter, endDelimiter);
-  }
+    public Template compile(final String location) throws IOException {
+        return compile(location, startDelimiter, endDelimiter);
+    }
 
-  /**
+    /**
    * Compile the resource located at the given uri.
    *
    * @param location The resource's location. Required.
@@ -373,23 +382,22 @@ public class Handlebars implements HelperRegistry {
    * @return A compiled template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compile(final String location, final String startDelimiter,
-      final String endDelimiter) throws IOException {
-    return compile(loader.sourceAt(location), startDelimiter, endDelimiter);
-  }
+    public Template compile(final String location, final String startDelimiter, final String endDelimiter) throws IOException {
+        return compile(loader.sourceAt(location), startDelimiter, endDelimiter);
+    }
 
-  /**
+    /**
    * Compile a handlebars template.
    *
    * @param input The handlebars input. Required.
    * @return A compiled template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compileInline(final String input) throws IOException {
-    return compileInline(input, startDelimiter, endDelimiter);
-  }
+    public Template compileInline(final String input) throws IOException {
+        return compileInline(input, startDelimiter, endDelimiter);
+    }
 
-  /**
+    /**
    * Compile a handlebars template.
    *
    * @param input The input text. Required.
@@ -398,26 +406,24 @@ public class Handlebars implements HelperRegistry {
    * @return A compiled template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compileInline(final String input, final String startDelimiter,
-      final String endDelimiter) throws IOException {
-    notNull(input, "The input is required.");
-    String filename = "inline@" + Integer.toHexString(Math.abs(input.hashCode()));
-    return compile(new StringTemplateSource(loader.resolve(filename), input),
-        startDelimiter, endDelimiter);
-  }
+    public Template compileInline(final String input, final String startDelimiter, final String endDelimiter) throws IOException {
+        notNull(input, "The input is required.");
+        String filename = "inline@" + Integer.toHexString(Math.abs(input.hashCode()));
+        return compile(new StringTemplateSource(loader.resolve(filename), input), startDelimiter, endDelimiter);
+    }
 
-  /**
+    /**
    * Compile a handlebars template.
    *
    * @param source The template source. Required.
    * @return A handlebars template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compile(final TemplateSource source) throws IOException {
-    return compile(source, startDelimiter, endDelimiter);
-  }
+    public Template compile(final TemplateSource source) throws IOException {
+        return compile(source, startDelimiter, endDelimiter);
+    }
 
-  /**
+    /**
    * Compile a handlebars template.
    *
    * @param source The template source. Required.
@@ -426,29 +432,28 @@ public class Handlebars implements HelperRegistry {
    * @return A handlebars template.
    * @throws IOException If the resource cannot be loaded.
    */
-  public Template compile(final TemplateSource source, final String startDelimiter,
-      final String endDelimiter) throws IOException {
-    notNull(source, "The template source is required.");
-    notEmpty(startDelimiter, "The start delimiter is required.");
-    notEmpty(endDelimiter, "The end delimiter is required.");
-    Parser parser = parserFactory.create(this, startDelimiter, endDelimiter);
-    Template template = cache.get(source, parser);
-    return template;
-  }
+    public Template compile(final TemplateSource source, final String startDelimiter, final String endDelimiter) throws IOException {
+        notNull(source, "The template source is required.");
+        notEmpty(startDelimiter, "The start delimiter is required.");
+        notEmpty(endDelimiter, "The end delimiter is required.");
+        Parser parser = parserFactory.create(this, startDelimiter, endDelimiter);
+        Template template = cache.get(source, parser);
+        return template;
+    }
 
-  /**
+    /**
    * Find a helper by name.
    *
    * @param <C> The helper runtime type.
    * @param name The helper's name. Required.
    * @return A helper or null if it's not found.
    */
-  @Override
-  public <C> Helper<C> helper(final String name) {
-    return registry.helper(name);
-  }
+    @Override
+    public <C> Helper<C> helper(final String name) {
+        return registry.helper(name);
+    }
 
-  /**
+    /**
    * Register a helper in the helper registry.
    *
    * @param <H> The helper runtime type.
@@ -456,13 +461,13 @@ public class Handlebars implements HelperRegistry {
    * @param helper The helper object. Required.
    * @return This handlebars.
    */
-  @Override
-  public <H> Handlebars registerHelper(final String name, final Helper<H> helper) {
-    registry.registerHelper(name, helper);
-    return this;
-  }
+    @Override
+    public <H> Handlebars registerHelper(final String name, final Helper<H> helper) {
+        registry.registerHelper(name, helper);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register all the helper methods for the given helper source.
    * </p>
@@ -488,13 +493,13 @@ public class Handlebars implements HelperRegistry {
    * @param helperSource The helper source. Required.
    * @return This handlebars object.
    */
-  @Override
-  public Handlebars registerHelpers(final Object helperSource) {
-    registry.registerHelpers(helperSource);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final Object helperSource) {
+        registry.registerHelpers(helperSource);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register all the helper methods for the given helper source.
    * </p>
@@ -521,13 +526,13 @@ public class Handlebars implements HelperRegistry {
    * @param helperSource The helper source. Enums are supported. Required.
    * @return This handlebars object.
    */
-  @Override
-  public Handlebars registerHelpers(final Class<?> helperSource) {
-    registry.registerHelpers(helperSource);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final Class<?> helperSource) {
+        registry.registerHelpers(helperSource);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register helpers from a JavaScript source.
    * </p>
@@ -556,13 +561,13 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @throws Exception If the JavaScript helpers can't be registered.
    */
-  @Override
-  public Handlebars registerHelpers(final URI location) throws Exception {
-    registry.registerHelpers(location);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final URI location) throws Exception {
+        registry.registerHelpers(location);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register helpers from a JavaScript source.
    * </p>
@@ -591,13 +596,13 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @throws Exception If the JavaScript helpers can't be registered.
    */
-  @Override
-  public Handlebars registerHelpers(final File input) throws Exception {
-    registry.registerHelpers(input);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final File input) throws Exception {
+        registry.registerHelpers(input);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register helpers from a JavaScript source.
    * </p>
@@ -627,13 +632,13 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @throws Exception If the JavaScript helpers can't be registered.
    */
-  @Override
-  public Handlebars registerHelpers(final String filename, final Reader source) throws Exception {
-    registry.registerHelpers(filename, source);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final String filename, final Reader source) throws Exception {
+        registry.registerHelpers(filename, source);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register helpers from a JavaScript source.
    * </p>
@@ -663,14 +668,13 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @throws Exception If the JavaScript helpers can't be registered.
    */
-  @Override
-  public Handlebars registerHelpers(final String filename, final InputStream source)
-      throws Exception {
-    registry.registerHelpers(filename, source);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final String filename, final InputStream source) throws Exception {
+        registry.registerHelpers(filename, source);
+        return this;
+    }
 
-  /**
+    /**
    * <p>
    * Register helpers from a JavaScript source.
    * </p>
@@ -700,130 +704,147 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @throws Exception If the JavaScript helpers can't be registered.
    */
-  @Override
-  public Handlebars registerHelpers(final String filename, final String source) throws Exception {
-    registry.registerHelpers(filename, source);
-    return this;
-  }
+    @Override
+    public Handlebars registerHelpers(final String filename, final String source) throws Exception {
+        registry.registerHelpers(filename, source);
+        return this;
+    }
 
-  @Override
-  public Set<Entry<String, Helper<?>>> helpers() {
-    return registry.helpers();
-  }
+    @Override
+    public Set<Entry<String, Helper<?>>> helpers() {
+        return registry.helpers();
+    }
 
-  /**
+    /**
+   * <p>
+   * Register all the helper methods for the given helper source.
+   * </p>
+   *
+   * @param source The helper source.
+   * @param clazz The helper source class.
+   */
+    /**
    * The resource locator.
    *
    * @return The resource locator.
    */
-  public TemplateLoader getLoader() {
-    return loader;
-  }
+    public TemplateLoader getLoader() {
+        return loader;
+    }
 
-  /**
+    /**
    * The template cache.
    *
    * @return The template cache.
    */
-  public TemplateCache getCache() {
-    return cache;
-  }
+    public TemplateCache getCache() {
+        return cache;
+    }
 
-  /**
+    /**
    * The missing value resolver.
    *
    * @return The missing value resolver.
    */
-  public MissingValueResolver getMissingValueResolver() {
-    return missingValueResolver;
-  }
+    public MissingValueResolver getMissingValueResolver() {
+        return missingValueResolver;
+    }
 
-  /**
+    /**
+   * The escaping strategy.
+   *
+   * @return The escaping strategy.
+   */
+    public EscapingStrategy getEscapingStrategy() {
+        return escapingStrategy;
+    }
+
+    /**
    * If true, missing helper parameters will be resolve to their names.
    *
    * @return If true, missing helper parameters will be resolve to their names.
    */
-  public boolean stringParams() {
-    return stringParams;
-  }
+    public boolean stringParams() {
+        return stringParams;
+    }
 
-  /**
+    /**
    * If true, unnecessary spaces and new lines will be removed from output. Default is: false.
    *
    * @return If true, unnecessary spaces and new lines will be removed from output. Default is:
    *         false.
    */
-  public boolean prettyPrint() {
-    return prettyPrint;
-  }
+    public boolean prettyPrint() {
+        return prettyPrint;
+    }
 
-  /**
+    /**
    * If true, unnecessary spaces and new lines will be removed from output. Default is: false.
    *
    * @param prettyPrint If true, unnecessary spaces and new lines will be removed from output.
    *        Default is: false.
    */
-  public void setPrettyPrint(final boolean prettyPrint) {
-    this.prettyPrint = prettyPrint;
-  }
+    public void setPrettyPrint(final boolean prettyPrint) {
+        this.prettyPrint = prettyPrint;
+    }
 
-  /**
+    /**
    * If true, unnecessary spaces and new lines will be removed from output. Default is: false.
    *
    * @param prettyPrint If true, unnecessary spaces and new lines will be removed from output.
    *        Default is: false.
    * @return This handlebars object.
    */
-  public HelperRegistry prettyPrint(final boolean prettyPrint) {
-    setPrettyPrint(prettyPrint);
-    return this;
-  }
+    public HelperRegistry prettyPrint(final boolean prettyPrint) {
+        setPrettyPrint(prettyPrint);
+        return this;
+    }
 
-  /**
+    /**
    * If true, missing helper parameters will be resolve to their names.
    *
    * @param stringParams If true, missing helper parameters will be resolve to
    *        their names.
    */
-  public void setStringParams(final boolean stringParams) {
-    this.stringParams = stringParams;
-  }
+    public void setStringParams(final boolean stringParams) {
+        this.stringParams = stringParams;
+    }
 
-  /**
+    /**
    * If true, missing helper parameters will be resolve to their names.
    *
    * @param stringParams If true, missing helper parameters will be resolve to
    *        their names.
    * @return The handlebars object.
    */
-  public HelperRegistry stringParams(final boolean stringParams) {
-    setStringParams(stringParams);
-    return this;
-  }
+    public HelperRegistry stringParams(final boolean stringParams) {
+        setStringParams(stringParams);
+        return this;
+    }
 
-  /**
+    /**
    * If true, templates will be able to call him self directly or indirectly. Use with caution.
    * Default is: false.
    *
    * @return If true, templates will be able to call him self directly or indirectly. Use with
    *         caution. Default is: false.
    */
-  public boolean infiniteLoops() {
-    return infiniteLoops;
-  }
+    public boolean infiniteLoops() {
+        return infiniteLoops;
+    }
 
-  /**
+    /**
    * If true, templates will be able to call him self directly or indirectly. Use with caution.
    * Default is: false.
    *
    * @param infiniteLoops If true, templates will be able to call him self directly or
    *        indirectly.
    */
-  public void setInfiniteLoops(final boolean infiniteLoops) {
-    this.infiniteLoops = infiniteLoops;
-  }
+    public void setInfiniteLoops(final boolean infiniteLoops) {
+        this.infiniteLoops = infiniteLoops;
+    }
 
-  /**
+    /**
    * If true, templates will be able to call him self directly or indirectly. Use with caution.
    * Default is: false.
    *
@@ -831,52 +852,52 @@ public class Handlebars implements HelperRegistry {
    *        indirectly.
    * @return The handlebars object.
    */
-  public HelperRegistry infiniteLoops(final boolean infiniteLoops) {
-    setInfiniteLoops(infiniteLoops);
-    return this;
-  }
+    public HelperRegistry infiniteLoops(final boolean infiniteLoops) {
+        setInfiniteLoops(infiniteLoops);
+        return this;
+    }
 
-  /**
+    /**
    * Set the end delimiter.
    *
    * @param endDelimiter The end delimiter. Required.
    */
-  public void setEndDelimiter(final String endDelimiter) {
-    this.endDelimiter = notEmpty(endDelimiter, "The endDelimiter is required.");
-  }
+    public void setEndDelimiter(final String endDelimiter) {
+        this.endDelimiter = notEmpty(endDelimiter, "The endDelimiter is required.");
+    }
 
-  /**
+    /**
    * Set the end delimiter.
    *
    * @param endDelimiter The end delimiter. Required.
    * @return This handlebars object.
    */
-  public Handlebars endDelimiter(final String endDelimiter) {
-    setEndDelimiter(endDelimiter);
-    return this;
-  }
+    public Handlebars endDelimiter(final String endDelimiter) {
+        setEndDelimiter(endDelimiter);
+        return this;
+    }
 
-  /**
+    /**
    * Set the start delimiter.
    *
    * @param startDelimiter The start delimiter. Required.
    */
-  public void setStartDelimiter(final String startDelimiter) {
-    this.startDelimiter = notEmpty(startDelimiter, "The startDelimiter is required.");
-  }
+    public void setStartDelimiter(final String startDelimiter) {
+        this.startDelimiter = notEmpty(startDelimiter, "The startDelimiter is required.");
+    }
 
-  /**
+    /**
    * Set the start delimiter.
    *
    * @param startDelimiter The start delimiter. Required.
    * @return This handlebars object.
    */
-  public Handlebars startDelimiter(final String startDelimiter) {
-    setStartDelimiter(startDelimiter);
-    return this;
-  }
+    public Handlebars startDelimiter(final String startDelimiter) {
+        setStartDelimiter(startDelimiter);
+        return this;
+    }
 
-  /**
+    /**
    * Set one or more {@link TemplateLoader}. In the case of two or more {@link TemplateLoader}, a
    * {@link CompositeTemplateLoader} will be created. Default is: {@link ClassPathTemplateLoader}.
    *
@@ -884,171 +905,179 @@ public class Handlebars implements HelperRegistry {
    * @return This handlebars object.
    * @see CompositeTemplateLoader
    */
-  public Handlebars with(final TemplateLoader... loader) {
-    isTrue(loader.length > 0, "The template loader is required.");
-    this.loader = loader.length == 1 ? loader[0] : new CompositeTemplateLoader(loader);
-    return this;
-  }
+    public Handlebars with(final TemplateLoader... loader) {
+        isTrue(loader.length > 0, "The template loader is required.");
+        this.loader = loader.length == 1 ? loader[0] : new CompositeTemplateLoader(loader);
+        return this;
+    }
 
-  /**
+    /**
    * Set a new {@link ParserFactory}.
    *
    * @param parserFactory A parser factory. Required.
    * @return This handlebars object.
    */
-  public HelperRegistry with(final ParserFactory parserFactory) {
-    this.parserFactory = notNull(parserFactory, "A parserFactory is required.");
-    return this;
-  }
+    public HelperRegistry with(final ParserFactory parserFactory) {
+        this.parserFactory = notNull(parserFactory, "A parserFactory is required.");
+        return this;
+    }
 
-  /**
+    /**
    * Set a new {@link TemplateCache}.
    *
    * @param cache The template cache. Required.
    * @return This handlebars object.
    */
-  public HelperRegistry with(final TemplateCache cache) {
-    this.cache = notNull(cache, "The template loader is required.");
-    return this;
-  }
+    public HelperRegistry with(final TemplateCache cache) {
+        this.cache = notNull(cache, "The template loader is required.");
+        return this;
+    }
 
-  /**
+    /**
    * Set a new {@link MissingValueResolver}.
    *
    * @param missingValueResolver The missing value resolver. Required.
    * @return This handlebars object.
    */
-  public Handlebars with(final MissingValueResolver missingValueResolver) {
-    this.missingValueResolver = notNull(missingValueResolver,
-        "The missing value resolver is required.");
-    return this;
-  }
+    public Handlebars with(final MissingValueResolver missingValueResolver) {
+        this.missingValueResolver = notNull(missingValueResolver, "The missing value resolver is required.");
+        return this;
+    }
 
-  /**
+    /**
    * Set the helper registry. This operation will override will remove any previously registered
    * helper.
    *
    * @param registry The helper registry. Required.
    * @return This handlebars object.
    */
-  public Handlebars with(final HelperRegistry registry) {
-    this.registry = notNull(registry, "The registry is required.");
+    public Handlebars with(final HelperRegistry registry) {
+        this.registry = notNull(registry, "The registry is required.");
+        return this;
+    }
 
-    return this;
-  }
-  /**
+    /**
+   * Set a new {@link EscapingStrategy}.
+   *
+   * @param escapingStrategy The escaping strategy. Required.
+   * @return This handlebars object.
+   */
+    public Handlebars with(final EscapingStrategy escapingStrategy) {
+        this.escapingStrategy = notNull(escapingStrategy, "The escaping strategy is required.");
+        return this;
+    }
+
+    /**
    * Return a parser factory.
    *
    * @return A parsert factory.
    */
-  public ParserFactory getParserFactory() {
-    return parserFactory;
-  }
+    public ParserFactory getParserFactory() {
+        return parserFactory;
+    }
 
-  /**
+    /**
    * Log the given message and format the message within the args.
    *
    * @param message The log's message.
    * @param args The optional args.
    * @see String#format(String, Object...)
    */
-  public static void log(final String message, final Object... args) {
-    logger.info(String.format(message, args));
-  }
+    public static void log(final String message, final Object... args) {
+        logger.info(String.format(message, args));
+    }
 
-  /**
+    /**
    * Log the given message and format the message within the args.
    *
    * @param message The log's message.
    * @see String#format(String, Object...)
    */
-  public static void log(final String message) {
-    logger.info(message);
-  }
+    public static void log(final String message) {
+        logger.info(message);
+    }
 
-  /**
+    /**
    * Log the given message as warn and format the message within the args.
    *
    * @param message The log's message.
    * @param args The optional args.
    * @see String#format(String, Object...)
    */
-  public static void warn(final String message, final Object... args) {
-    if (logger.isWarnEnabled()) {
-      logger.warn(String.format(message, args));
+    public static void warn(final String message, final Object... args) {
+        if (logger.isWarnEnabled()) {
+            logger.warn(String.format(message, args));
+        }
     }
-  }
 
-  /**
+    /**
    * Log the given message as warn and format the message within the args.
    *
    * @param message The log's message.
    * @see String#format(String, Object...)
    */
-  public static void warn(final String message) {
-    logger.warn(message);
-  }
-
-  /**
-   * Log the given message as debug and format the message within the args.
-   *
-   * @param message The log's message.
-   * @param args The optional args.
-   * @see String#format(String, Object...)
-   */
-  public static void debug(final String message, final Object... args) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format(message, args));
+    public static void warn(final String message) {
+        logger.warn(message);
     }
-  }
 
-  /**
+    /**
+   * Log the given message as debug and format the message within the args.
+   *
+   * @param message The log's message.
+   * @param args The optional args.
+   * @see String#format(String, Object...)
+   */
+    public static void debug(final String message, final Object... args) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format(message, args));
+        }
+    }
+
+    /**
    * Log the given message as debug and format the message within the args.
    *
    * @param message The log's message.
    * @see String#format(String, Object...)
    */
-  public static void debug(final String message) {
-    logger.debug(message);
-  }
+    public static void debug(final String message) {
+        logger.debug(message);
+    }
 
-  /**
+    /**
    * Log the given message as error and format the message within the args.
    *
    * @param message The log's message.
    * @param args The optional args.
    * @see String#format(String, Object...)
    */
+    public static void error(final String message, final Object... args) {
+        logger.error(String.format(message, args));
+    }
 
-  public static void error(final String message, final Object... args) {
-    logger.error(String.format(message, args));
-  }
-
-  /**
+    /**
    * Log the given message as error and format the message within the args.
    *
    * @param message The log's message.
    * @see String#format(String, Object...)
    */
-  public static void error(final String message) {
-    logger.error(message);
-  }
+    public static void error(final String message) {
+        logger.error(message);
+    }
 
-  /**
+    /**
    * Register built-in helpers.
    *
    * @param handlebars The handlebars instance.
    */
-  private static void registerBuiltinsHelpers(final Handlebars handlebars) {
-    handlebars.registerHelper(WithHelper.NAME, WithHelper.INSTANCE);
-    handlebars.registerHelper(IfHelper.NAME, IfHelper.INSTANCE);
-    handlebars.registerHelper(UnlessHelper.NAME, UnlessHelper.INSTANCE);
-    handlebars.registerHelper(EachHelper.NAME, EachHelper.INSTANCE);
-    handlebars.registerHelper(EmbeddedHelper.NAME, EmbeddedHelper.INSTANCE);
-    handlebars.registerHelper(BlockHelper.NAME, BlockHelper.INSTANCE);
-    handlebars.registerHelper(PartialHelper.NAME, PartialHelper.INSTANCE);
-    handlebars.registerHelper(PrecompileHelper.NAME, PrecompileHelper.INSTANCE);
-    I18nHelper.registerHelpers(handlebars);
-  }
-
+    private static void registerBuiltinsHelpers(final Handlebars handlebars) {
+        handlebars.registerHelper(WithHelper.NAME, WithHelper.INSTANCE);
+        handlebars.registerHelper(IfHelper.NAME, IfHelper.INSTANCE);
+        handlebars.registerHelper(UnlessHelper.NAME, UnlessHelper.INSTANCE);
+        handlebars.registerHelper(EachHelper.NAME, EachHelper.INSTANCE);
+        handlebars.registerHelper(EmbeddedHelper.NAME, EmbeddedHelper.INSTANCE);
+        handlebars.registerHelper(BlockHelper.NAME, BlockHelper.INSTANCE);
+        handlebars.registerHelper(PartialHelper.NAME, PartialHelper.INSTANCE);
+        handlebars.registerHelper(PrecompileHelper.NAME, PrecompileHelper.INSTANCE);
+        I18nHelper.registerHelpers(handlebars);
+    }
 }
